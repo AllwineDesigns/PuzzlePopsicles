@@ -3,9 +3,7 @@ import seedrandom from 'seedrandom';
 import spo from 'svg-path-outline';
 import makerjs from 'makerjs';
 
-//import img from './Logo3x3.svg';
-//import img from './mom-and-pop-shop.svg';
-import img from './CampTrinity.svg';
+import img from './Logo3x3.svg';
 
 const pt2str = ([x,y]) => (x +" " + y);
 const lerp = (pt1,pt2,t) => ([pt1[0]*(1-t)+pt2[0]*t, pt1[1]*(1-t)+pt2[1]*t]);
