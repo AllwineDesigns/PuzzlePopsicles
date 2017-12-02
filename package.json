@@ -2,6 +2,7 @@
   "name": "pp",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://allwinedesigns.github.io/PuzzlePopsicles",
   "dependencies": {
     "bin-pack": "^1.0.2",
     "clone": "^2.1.1",
@@ -13,12 +14,15 @@
     "svg-path-outline": "^1.0.1"
   },
   "devDependencies": {
+    "gh-pages": "^1.1.0",
     "react-scripts": "0.9.5"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   }
 }
