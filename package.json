@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "bin-pack": "^1.0.2",
+    "clone": "^2.1.1",
+    "datauri": "^1.0.5",
     "react": "15.5.4",
     "react-dom": "15.5.4",
     "react-element-to-string": "^1.0.2",
