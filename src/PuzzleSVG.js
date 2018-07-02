@@ -4,10 +4,11 @@ import spo from 'svg-path-outline';
 import makerjs from 'makerjs';
 import clone from 'clone';
 
+import img from './Trinity2018.svg';
 //import img from './Logo3x3.svg';
 //import img from './CampTrinity.svg';
 //import img from './mom-and-pop-shop.svg';
-import img from './BozemanJS.svg';
+//import img from './BozemanJS.svg';
 
 const pt2str = ([x,y]) => (x +" " + y);
 const lerp = (pt1,pt2,t) => ([pt1[0]*(1-t)+pt2[0]*t, pt1[1]*(1-t)+pt2[1]*t]);
@@ -136,6 +137,8 @@ class PuzzleSVG extends Component {
     const {
       onUpdate
     } = this.props;
+
+    console.log(onUpdate);
 
     if(onUpdate) {
       onUpdate();
@@ -402,7 +405,7 @@ class PuzzleSVG extends Component {
     }
 
     return (
-      <svg width={"18in"} height={"4in"} viewBox={"0 0 " + width + " " + height} xmlns="http://www.w3.org/2000/svg">
+      <svg width={"18in"} height={"4in"} viewBox={"0 0 " + width + " " + height} xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
         { raster ? 
         <defs>
           <pattern id="mypattern" width={puzzle_width} height={puzzle_height} patternUnits="userSpaceOnUse">
