@@ -10,6 +10,12 @@ import img from './Trinity2018.svg';
 //import img from './mom-and-pop-shop.svg';
 //import img from './BozemanJS.svg';
 
+const avgX = (pts) => pts.map(pt => pt[0]).reduce((a,b) => a+b)/pts.length;
+const avgY = (pts) => pts.map(pt => pt[1]).reduce((a,b) => a+b)/pts.length;
+const minX = (pts) => pts.map(pt => pt[0]).reduce((a,b) => Math.min(a,b));
+const minY = (pts) => pts.map(pt => pt[1]).reduce((a,b) => Math.min(a,b));
+const maxX = (pts) => pts.map(pt => pt[0]).reduce((a,b) => Math.max(a,b));
+const maxY = (pts) => pts.map(pt => pt[1]).reduce((a,b) => Math.max(a,b));
 const pt2str = ([x,y]) => (x +" " + y);
 const lerp = (pt1,pt2,t) => ([pt1[0]*(1-t)+pt2[0]*t, pt1[1]*(1-t)+pt2[1]*t]);
 const add = (pt1,pt2) => ([pt1[0]+pt2[0], pt1[1]+pt2[1]]);
@@ -207,18 +213,24 @@ class PuzzleSVG extends Component {
       }
     }
 
+    let horizontal_edge_dir = [];
     let horizontal_edges = [];
     for(let r = 0; r < rows+1; r++) {
       let row = [];
+      let row_dir = [];
       horizontal_edges.push(row);
+      horizontal_edge_dir.push(row_dir);
+
       for(let c = 0; c < cols; c++) {
         let pt1 = points[r][c];
         let pt2 = points[r][c+1];
 
         if(r === 0 || r === rows) {
           row.push([ pt1, pt2 ]);
+          row_dir.push(0);
         } else {
           const up = 2*Math.floor(2*rng())-1;
+          row_dir.push(up);
 
           row.push([ pt1, add(lerp(pt1,pt2,controlT1H), [ crng(controlPointOffsetXMax), crng(controlPointOffsetYMax) ]),
                           add(lerp(pt1,pt2,controlT2H), [ crng(controlPointOffsetXMax), up*.33*h+crng(controlPointOffsetYMax) ]),
@@ -231,17 +243,22 @@ class PuzzleSVG extends Component {
     }
 
     let vertical_edges = [];
+    let vertical_edge_dir = [];
     for(let r = 0; r < rows; r++) {
       let row = [];
+      let row_dir = [];
       vertical_edges.push(row);
+      vertical_edge_dir.push(row_dir);
       for(let c = 0; c < cols+1; c++) {
         let pt1 = points[r][c];
         let pt2 = points[r+1][c];
 
         if(c === 0 || c === cols) {
           row.push([ pt1, pt2 ]);
+          row_dir.push(0);
         } else {
           const left = 2*Math.floor(2*rng())-1;
+          row_dir.push(left);
           row.push([ pt1, add(lerp(pt1,pt2,controlT1V), [ crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
                           add(lerp(pt1,pt2,controlT2V), [ left*.33*h+crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
                           add(lerp(pt1,pt2,controlT3V), [ left*.33*h+crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
@@ -273,6 +290,11 @@ class PuzzleSVG extends Component {
         var edge3 = horizontal_edges[r+1][c].slice().reverse();
         var edge4 = vertical_edges[r][c].slice().reverse();
 
+        let dir1 = horizontal_edge_dir[r][c];
+        let dir2 = vertical_edge_dir[r][c+1];
+        let dir3 = horizontal_edge_dir[r+1][c];
+        let dir4 = vertical_edge_dir[r][c];
+
         pts.push("M " + pt2str(edge1[0]));
         appendEdge(pts, edge1)
         appendEdge(pts, edge2)
@@ -280,126 +302,113 @@ class PuzzleSVG extends Component {
         appendEdge(pts, edge4)
         pts[pts.length-1] = "Z";
 
-        let outline = spo(pts.join(" "), kerf*.5, { bezierAccuracy: .001 });
-        //let outline = pts.join(" ");
+        let outline = pts.join(" ");
         let outline_model = makerjs.importer.fromSVGPathData(outline, { bezierAccuracy: .001 });
 
-        const stick_height = 2.875*25.4;
+        const stick_height = 3.25*25.4;
         const stick_width = .375*25.4;
 
-        const attachment_width = .7;
-        const attachment_height = 13;
-        const attachment_spacing = 1;
         var stick_model = {
           models: {
             stick: new makerjs.models.Oval(stick_width, stick_height),
+//            circle: new makerjs.models.Oval(2*stick_width, 2*stick_width)
           }
         };
-
-        var attachment_model = {
-          models: {
-            attachment_left: new makerjs.models.Rectangle(attachment_width, attachment_height),
-            attachment_right: new makerjs.models.Rectangle(attachment_width, attachment_height)
-          }
+//        stick_model.models.circle.origin = [ -stick_width*.5, -stick_width*.5 ];
+        stick_model.origin = [-stick_width*.5, -stick_width*.5];
+        let rotation_options= {
+          0: "top",
+          90: "left",
+          180: "bottom",
+          270: "right"
         };
-
-        attachment_model.models.attachment_left.origin = [ attachment_spacing, stick_height-stick_width*.5 ];
-        attachment_model.models.attachment_right.origin = [ stick_width-attachment_width-attachment_spacing, stick_height-stick_width*.5 ];
-
-        makerjs.model.rotate(stick_model, -45);
-        makerjs.model.rotate(attachment_model, -45);
-
-        const corner = nrng(4);
-        let rotation = -45;
-        let origin = edge4[0];
-        switch(corner) {
-          case 0: // lower left
-            stick_model.origin = [-.5-.25*Math.sqrt(2)*stick_width-.5*Math.sqrt(2)*stick_height+edge4[0][0],-.5+.25*Math.sqrt(2)*stick_width-.5*Math.sqrt(2)*stick_height-edge4[0][1]];
-            break;
-          case 1: // lower right
-            rotation = 45;
-            origin = edge3[0];
-            makerjs.model.rotate(stick_model, 90);
-            makerjs.model.rotate(attachment_model, 90);
-            stick_model.origin = [.5-.25*Math.sqrt(2)*stick_width+.5*Math.sqrt(2)*stick_height+edge3[0][0],-.5-.25*Math.sqrt(2)*stick_width-.5*Math.sqrt(2)*stick_height-edge3[0][1]];
-            break;
-          case 2: // upper right
-            rotation = 135;
-            origin = edge2[0];
-            makerjs.model.rotate(stick_model, 180);
-            makerjs.model.rotate(attachment_model, 180);
-            stick_model.origin = [.5+.25*Math.sqrt(2)*stick_width+.5*Math.sqrt(2)*stick_height+edge2[0][0],.5-.25*Math.sqrt(2)*stick_width+.5*Math.sqrt(2)*stick_height-edge2[0][1]];
-            break;
-          case 3: // upper left
-            rotation = 225;
-            origin = edge1[0];
-            makerjs.model.rotate(stick_model, -90);
-            makerjs.model.rotate(attachment_model, -90);
-            stick_model.origin = [-.5+.25*Math.sqrt(2)*stick_width-.5*Math.sqrt(2)*stick_height+edge1[0][0],.5+.25*Math.sqrt(2)*stick_width+.5*Math.sqrt(2)*stick_height-edge1[0][1]];
-            break;
+        if(r === 0) {
+          delete rotation_options[0];
+        } else if(r === rows-1) {
+          delete rotation_options[180];
         }
 
-        attachment_model.origin = clone(stick_model.origin);
+        if(c === 0) {
+          delete rotation_options[90];
+        } else if(c === cols-1) {
+          delete rotation_options[270];
+        }
 
-        let attachment_dup = clone(attachment_model);
+        let angles = Object.keys(rotation_options);
+        let angle = parseFloat(angles[nrng(angles.length)]);
+
+        makerjs.model.rotate(stick_model, angle);
+//        stick_model.origin = [c*piece_width+piece_width*.5-stick_width*.5, -r*piece_height-piece_width*.5-stick_width*.5];
+        const origin = [-stick_width*.5, -stick_width*.5];
+
+        const side = rotation_options[angle];
+        const overlap = 1;
+        let offset = [0, 0];
+
+        if(side === "top") {
+          offset[0] += avgX(edge1);
+          offset[1] -= maxY(edge1)+overlap;
+        } else if(side === "bottom") {
+          offset[0] += avgX(edge3);
+          offset[1] -= minY(edge3)-overlap;
+        } else if(side === "left") {
+          offset[0] += maxX(edge4)+overlap;
+          offset[1] -= avgY(edge4);
+        } else if(side === "right") {
+          offset[0] += minX(edge2)-overlap;
+          offset[1] -= avgY(edge2);
+        }
+
+        origin[0] += offset[0];
+        origin[1] += offset[1];
+
+        stick_model.origin = origin;
+
         let outline_dup = clone(outline_model);
-        let stick_dup = clone(stick_model);
+        makerjs.model.combineSubtraction(stick_model, outline_dup);
 
-        makerjs.model.combineSubtraction(attachment_dup, stick_dup);
-
-        let attachment_raster = {
+        const stick_vector = {
           models: {
-            attachment: attachment_dup,
-            stick: stick_dup
+            stick: stick_model,
+            outline: outline_dup
           }
         };
+//        stick_vector.origin = [0,0];
 
-        makerjs.model.combineSubtraction(attachment_raster, outline_dup);
-        attachment_raster.models.outline = outline_dup;
+        stick_vector.origin = [ -offset[0], -offset[1] ];
+        makerjs.model.rotate(stick_vector, -angle-90);
 
-        let attachment_raster_output = makerjs.exporter.toSVGPathData(attachment_raster, false, [0,0]);
+        const stick_simple_output = makerjs.exporter.toSVGPathData({ models: [ stick_vector ] }, false, [0,0]);
+        const stick_adjusted = spo(stick_simple_output, kerf*.5, { bezierAccuracy: .001 });
+        const outline_adjusted = spo(pts.join(" "), kerf*.5, { bezierAccuracy: .001 });
+//        const stick_adjusted = stick_simple_output;
+//        const outline_adjusted = pts.join(" ");
 
-        let outline_output = makerjs.exporter.toSVGPathData(outline_model, false, [0, 0]);
+        const stick_adjusted_model = makerjs.importer.fromSVGPathData(stick_adjusted, { bezierAccuracy: .001 });
+        const outline_adjusted_model = makerjs.importer.fromSVGPathData(outline_adjusted, { bezierAccuracy: .001 });
 
-        makerjs.model.combineUnion(outline_model, attachment_model);
-        makerjs.model.combineUnion({ models: [ outline_model, attachment_model] }, stick_model);
-
-        let output = makerjs.exporter.toSVGPathData({ models: [ attachment_model, outline_model, stick_model ] }, false, [0,0]);
+        const output = makerjs.exporter.toSVGPathData({ models: [ outline_adjusted_model ] }, false, [0,0]);
+        const stick_output = makerjs.exporter.toSVGPathData({ models: [ stick_adjusted_model ] }, false, [0,0]);
 
         if(!outline) {
           console.log("Couldn't generate outline for " + r + ", " + c);
           pieces.push(<g key={r + "," + c} transform={"translate(" + (0*c) + ", " + (0*r) +")"}><path d={pts.join(" ")} fill="url(#mypattern)" strokeWidth={strokeWidth} stroke="black"/></g>)
         }
-
-// 6 inch layout
-//          <g key={r + "," + c} transform={"translate(" + ((rows*r+c)*22+18) + "," + ((invert ? height-max_diagonal-15 : max_diagonal-3)) +") rotate(" + (rotation + (invert ? 180 : 0)) + ") translate(" + (-origin[0]) + ", " + (-origin[1]) + ")" }>
-// 4 inch
-//          <g key={r + "," + c} transform={"translate(" + (newC*(35+stick_height+max_diagonal)+(invert ? stick_height+max_diagonal : max_diagonal)) + "," + (newR*19+15) +") rotate(" + (rotation-90 + (invert ? 180 : 0)) + ") translate(" + (-origin[0]) + ", " + (-origin[1]) + ")" }>
-
-//        const max_diagonal = Math.sqrt((piece_width+pointOffsetXMax)*(piece_width+pointOffsetXMax)+(piece_height+pointOffsetYMax)*(piece_height+pointOffsetYMax));
-        const max_diagonal = Math.sqrt(piece_width*piece_width+piece_height*piece_height);
-        const i = cols*r+c;
-        const invert = i%2;
-        console.log(i, corner);
-        const newC = Math.floor(i/4);
-        const newR = i%4;
+//              "translate(" + (puzzle_width+10*(cols-1)) + "," + ((stick_width+5)*c+(stick_width+5)*cols*r+margin) + ")"
+//              "rotate(" + (angle+90)+ ", " + (offset[0]) + "," + (-offset[1]) + ")" +
+//              " translate(" + (offset[0]) + ", " + (-offset[1]) + ")"
         pieces.push(
           <g key={r + "," + c}>
-            <g transform={"translate(" + (newC*(35+stick_height+max_diagonal)+(invert ? stick_height+max_diagonal : max_diagonal)) + "," + (newR*19+17) +") rotate(" + (rotation-90 + (invert ? 180 : 0)) + ") translate(" + (-origin[0]) + ", " + (-origin[1]) + ")" }>
-              { raster ? <path d={outline_output} fill="url(#mypattern)"/> : null }
+            <g transform={ "translate(" + (10*c) + "," + (10*r) + ")"}>
+              { raster ? <path d={output} fill="url(#mypattern)"/> : null }
               { vector ? <path d={output} fill="none" strokeWidth={strokeWidth} stroke="black"/> : null }
-              { raster ? <path d={attachment_raster_output} fill="black" stroke="none"/> : null }
             </g>
-            { raster ? 
-            <g>
-              <g transform={"translate(" + (newC*(35+stick_height+max_diagonal)+(invert ? stick_height+max_diagonal-5 : max_diagonal+5)) + "," + (newR*19+17+(invert ? 1 : -1)) +") rotate(" + (invert ? 180 : 0) + ")"}>
-                  <text style={{ fontSize: "2pt", fontFamily: "sans-serif" }}>Learn more about puzzle popsicle</text>
-              </g>
-              <g transform={"translate(" + (newC*(35+stick_height+max_diagonal)+(invert ? stick_height+max_diagonal-8 : max_diagonal+8)) + "," + (newR*19+17+(invert ? -2 : 2)) +") rotate(" + (invert ? 180 : 0) + ")"}>
-                  <text style={{ fontSize: "2pt", fontFamily: "sans-serif" }}>sticks at allwinedesigns.com</text>
-              </g>
+            <g transform={
+              "translate(" + (puzzle_width+10*(cols-1)) + "," + ((stick_width+5)*c+(stick_width+5)*cols*r+margin) + ")"
+            }>
+              { raster ? <path d={stick_output} fill="url(#mypattern)"/> : null }
+              { vector ? <path d={stick_output} fill="none" strokeWidth={strokeWidth} stroke="black"/> : null }
             </g>
-            : null }
           </g>);
       }
     }
