@@ -4,7 +4,8 @@ import spo from 'svg-path-outline';
 import makerjs from 'makerjs';
 import clone from 'clone';
 
-import img from './Trinity2018.svg';
+import img from './montana_home.svg';
+//import img from './Trinity2018.svg';
 //import img from './Logo3x3.svg';
 //import img from './CampTrinity.svg';
 //import img from './mom-and-pop-shop.svg';
@@ -306,7 +307,7 @@ class PuzzleSVG extends Component {
         let outline_model = makerjs.importer.fromSVGPathData(outline, { bezierAccuracy: .001 });
 
         const stick_height = 3.25*25.4;
-        const stick_width = .375*25.4;
+        const stick_width = .385*25.4;
 
         var stick_model = {
           models: {
