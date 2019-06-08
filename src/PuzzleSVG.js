@@ -4,7 +4,7 @@ import spo from 'svg-path-outline';
 import makerjs from 'makerjs';
 import clone from 'clone';
 
-import img from './montana_home.svg';
+//import img from './montana_home.svg';
 //import img from './Trinity2018.svg';
 //import img from './Logo3x3.svg';
 //import img from './CampTrinity.svg';
@@ -64,6 +64,24 @@ const offsetEdge = (edge, offset) => {
     newEdge.push(add(edge[i], offset));
   }
   return newEdge;
+};
+
+const edge2d = (edge) => {
+  const pts = [];
+  if(edge.length === 2) {
+    pts.push("M" + pt2str(edge[0]));
+    pts.push("L" + pt2str(edge[1]));
+  } else {
+    pts.push("M" + pt2str(edge[0]));
+    pts.push("L " + pt2str(lerp(edge[0], edge[1], .5)));
+    pts.push("Q " + pt2str(edge[1]) + " " + pt2str(lerp(edge[1], edge[2], .5)));
+    pts.push("T " + pt2str(lerp(edge[2], edge[3], .5)));
+    pts.push("T " + pt2str(lerp(edge[3], edge[4], .5)));
+    pts.push("T " + pt2str(lerp(edge[4], edge[5], .5)));
+    pts.push("L " + pt2str(edge[5]));
+  }
+
+  return pts.join(" ");
 };
 
 const appendEdge = (pts, edge) => {
@@ -126,6 +144,7 @@ class PuzzleSVG extends Component {
 
     let that = this;
 
+/*
     fetch(img)
      .then(response => response.blob())
      .then((data) => {
@@ -136,8 +155,9 @@ class PuzzleSVG extends Component {
        a.onload = function(e) {that.setState({ img: e.target.result });}
        a.readAsDataURL(data);
      });
+     */
 
-     this.state = { img: img };
+//     this.state = { img: img };
   }
 
   componentDidUpdate() {
@@ -145,6 +165,7 @@ class PuzzleSVG extends Component {
       onUpdate
     } = this.props;
 
+    console.log("in componentDidUpdate");
     console.log(onUpdate);
 
     if(onUpdate) {
@@ -153,9 +174,6 @@ class PuzzleSVG extends Component {
   }
 
   render() {
-    const {
-      img
-    } = this.state;
     const {
       seed,
       piece_width,
@@ -167,8 +185,6 @@ class PuzzleSVG extends Component {
       cols,
       rows,
       vector,
-      raster,
-      image
     } = this.props;
 
     const rng = seedrandom(seed);
@@ -234,8 +250,8 @@ class PuzzleSVG extends Component {
           row_dir.push(up);
 
           row.push([ pt1, add(lerp(pt1,pt2,controlT1H), [ crng(controlPointOffsetXMax), crng(controlPointOffsetYMax) ]),
-                          add(lerp(pt1,pt2,controlT2H), [ crng(controlPointOffsetXMax), up*.33*h+crng(controlPointOffsetYMax) ]),
-                          add(lerp(pt1,pt2,controlT3H), [ crng(controlPointOffsetXMax), up*.33*h+crng(controlPointOffsetYMax) ]),
+                          add(lerp(pt1,pt2,controlT2H), [ crng(controlPointOffsetXMax), up*.28*h+crng(controlPointOffsetYMax) ]),
+                          add(lerp(pt1,pt2,controlT3H), [ crng(controlPointOffsetXMax), up*.28*h+crng(controlPointOffsetYMax) ]),
                           add(lerp(pt1,pt2,controlT4H), [ crng(controlPointOffsetXMax), crng(controlPointOffsetYMax) ]),
                           pt2 ]);
 
@@ -261,8 +277,8 @@ class PuzzleSVG extends Component {
           const left = 2*Math.floor(2*rng())-1;
           row_dir.push(left);
           row.push([ pt1, add(lerp(pt1,pt2,controlT1V), [ crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
-                          add(lerp(pt1,pt2,controlT2V), [ left*.33*h+crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
-                          add(lerp(pt1,pt2,controlT3V), [ left*.33*h+crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
+                          add(lerp(pt1,pt2,controlT2V), [ left*.28*h+crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
+                          add(lerp(pt1,pt2,controlT3V), [ left*.28*h+crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
                           add(lerp(pt1,pt2,controlT4V), [ crng(controlPointOffsetYMax), crng(controlPointOffsetYMax) ]),
                           pt2 ]);
 
@@ -276,13 +292,45 @@ class PuzzleSVG extends Component {
     let width = 18*25.4;
     //let height = 6*25.4;
     let height = 4*25.4;
-    let img_width = dpi/25.4*width;
-    let img_height = dpi/25.4*height;
 
     let pieces = [];
 
+    // vertical edges
+    for(let c = 0; c <= cols; c++) {
+      const column = [];
+      column.push("M " + pt2str(vertical_edges[0][c][0]));
+      for(let r = 0; r < rows; r++) {
+        appendEdge(column, vertical_edges[r][c])
+      }
+      pieces.push(
+        (<g key={c + ",v"}>
+          <g>
+            { vector ? <path d={column.join(" ")} fill="none" strokeWidth={strokeWidth} stroke="black"/> : null }
+          </g>
+        </g>)
+      );
+    }
+
+    // horizontal edges
+    for(let r = 0; r <= rows; r++) {
+      const row = [];
+      row.push("M " + pt2str(horizontal_edges[r][0][0]));
+      for(let c = 0; c < cols; c++) {
+        appendEdge(row, horizontal_edges[r][c])
+      }
+      pieces.push(
+        (<g key={r + ",h"}>
+          <g>
+            { vector ? <path d={row.join(" ")} fill="none" strokeWidth={strokeWidth} stroke="black"/> : null }
+          </g>
+        </g>)
+      );
+    }
+
+    /*
     for(let r = 0; r < rows; r++) {
       for(let c = 0; c < cols; c++) {
+        console.log(r, c);
 //        if(!(r == 0 && c == 0)) continue;
         let pts = [];
 
@@ -380,7 +428,9 @@ class PuzzleSVG extends Component {
         makerjs.model.rotate(stick_vector, -angle-90);
 
         const stick_simple_output = makerjs.exporter.toSVGPathData({ models: [ stick_vector ] }, false, [0,0]);
-        const stick_adjusted = spo(stick_simple_output, kerf*.5, { bezierAccuracy: .001 });
+        const stick_adjusted = stick_simple_output;
+//        const outline_adjusted = pts.join(" ");
+//        const stick_adjusted = spo(stick_simple_output, kerf*.5, { bezierAccuracy: .001 });
         const outline_adjusted = spo(pts.join(" "), kerf*.5, { bezierAccuracy: .001 });
 //        const stick_adjusted = stick_simple_output;
 //        const outline_adjusted = pts.join(" ");
@@ -400,30 +450,18 @@ class PuzzleSVG extends Component {
 //              " translate(" + (offset[0]) + ", " + (-offset[1]) + ")"
         pieces.push(
           <g key={r + "," + c}>
-            <g transform={ "translate(" + (10*c) + "," + (10*r) + ")"}>
-              { raster ? <path d={output} fill="url(#mypattern)"/> : null }
+            <g transform={ "translate(" + (3*c) + "," + (3*r) + ")"}>
               { vector ? <path d={output} fill="none" strokeWidth={strokeWidth} stroke="black"/> : null }
-            </g>
-            <g transform={
-              "translate(" + (puzzle_width+10*(cols-1)) + "," + ((stick_width+5)*c+(stick_width+5)*cols*r+margin) + ")"
-            }>
-              { raster ? <path d={stick_output} fill="url(#mypattern)"/> : null }
-              { vector ? <path d={stick_output} fill="none" strokeWidth={strokeWidth} stroke="black"/> : null }
             </g>
           </g>);
       }
     }
+    */
+
+    console.log('in render');
 
     return (
       <svg width={"18in"} height={"4in"} viewBox={"0 0 " + width + " " + height} xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
-        { raster ? 
-        <defs>
-          <pattern id="mypattern" width={puzzle_width} height={puzzle_height} patternUnits="userSpaceOnUse">
-            <image x={0} y={0} width={puzzle_width} height={puzzle_height} xlinkHref={img}/>
-          </pattern>
-        </defs>
-        : null }
-        { image ? <image x={0} y={0} width={width} height={height} xlinkHref={image}/> : null }
         <g transform={"translate(" + (margin+strokeWidth*.5) + ", " + (margin+strokeWidth*.5) + ")"}>
           {pieces}
         </g>

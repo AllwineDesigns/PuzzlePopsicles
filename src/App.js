@@ -10,39 +10,14 @@ class App extends Component {
   }
 
   handleSaveSVG = () => {
-    let element = document.createElement('div');
-
-    let onUpdate = () => {
-      let blob = new Blob([ element.innerHTML ], { type: 'image/svg+xml' });
-      let url = window.URL.createObjectURL(blob);
-      let canvas = document.createElement('canvas');
-      canvas.width = 18*600;
-      canvas.height = 4*600;
-
-      let ctx = canvas.getContext('2d');
-      let img = document.createElement('img');
-      img.src = url;
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        let rasterURL = canvas.toDataURL();
-
-        let element2 = document.createElement('div');
-        let onUpdate2 = () => {
-          let url = window.URL.createObjectURL(new Blob([ element2.innerHTML ], { type: 'image/svg+xml' }));
-          this.setState({ download_url: url });
-        };
-        ReactDOM.render(
-            <PuzzleSVG onUpdate={onUpdate2} raster={false} vector={true} image={rasterURL} cols={2} rows={2} seed="trinity2018" piece_width={25.4} piece_height={25.4} dpi={96} margin={.25*25.4} kerf={.009*25.4} strokeWidth={.001*25.4}/>,
-            element2);
-
-      };
-    };
+    console.log("in handleSaveSVG");
+    const element = document.createElement('div');
 
     ReactDOM.render(
-        <PuzzleSVG onUpdate={onUpdate} raster={true} vector={false} cols={2} rows={2} seed="trinity2018" piece_width={25.4} piece_height={25.4} dpi={96} margin={.25*25.4} kerf={.009*25.4} strokeWidth={.001*25.4}/>,
+        <PuzzleSVG raster={false} vector={true} cols={33} rows={18} seed="becky" piece_width={14} piece_height={14} dpi={96} margin={.25*25.4} kerf={.009*25.4} strokeWidth={.001*25.4}/>,
         element);
-
+    const url = window.URL.createObjectURL(new Blob([ element.innerHTML ], { type: 'image/svg+xml' }));
+    this.setState({ download_url: url });
   };
   render() {
     const {
@@ -52,7 +27,6 @@ class App extends Component {
     return (
         <div>
         <div>
-          <PuzzleSVG raster={true} vector={true} cols={2} rows={2} seed="trinity2018" piece_width={25.4} piece_height={25.4} dpi={96} margin={.25*25.4} kerf={.009*25.4} strokeWidth={.001*25.4}/>
           </div>
           <button onClick={this.handleSaveSVG}>Save SVG</button>
           { download_url ? <a href={download_url} download="PuzzleSVG.svg">Download SVG</a> : null }
